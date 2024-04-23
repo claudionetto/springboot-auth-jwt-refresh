@@ -1,13 +1,11 @@
 package com.claudionetto.jwtouath2.entities;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -34,5 +32,8 @@ public class UserInfoEntity {
 
     @Column(nullable = false, name = "ROLES")
     private String roles;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<RefreshTokenEntity> refreshTokens;
 
 }

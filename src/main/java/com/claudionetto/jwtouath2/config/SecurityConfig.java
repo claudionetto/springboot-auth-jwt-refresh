@@ -1,9 +1,11 @@
 package com.claudionetto.jwtouath2.config;
 
 import com.claudionetto.jwtouath2.config.jwtConfig.JwtAccessTokenFilter;
+import com.claudionetto.jwtouath2.config.jwtConfig.JwtRefreshTokenFilter;
 import com.claudionetto.jwtouath2.config.jwtConfig.JwtTokenUtils;
 import com.claudionetto.jwtouath2.config.userConfig.RSAKeyRecord;
 import com.claudionetto.jwtouath2.config.userConfig.UserInfoManagerConfig;
+import com.claudionetto.jwtouath2.repositories.RefreshTokenRepository;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
@@ -22,6 +24,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -44,8 +47,10 @@ public class SecurityConfig {
     private final UserInfoManagerConfig userInfoManagerConfig;
     private final JwtTokenUtils jwtTokenUtils;
     private final RSAKeyRecord rsaKeyRecord;
+    private final RefreshTokenRepository refreshTokenRepo;
+    private final LogoutHandlerService logoutHandlerService;
 
-    @Order(3)
+    @Order(1)
     @Bean
     public SecurityFilterChain signInSecurityFilterChain(HttpSecurity httpSecurity) throws Exception{
         return httpSecurity
@@ -81,7 +86,49 @@ public class SecurityConfig {
                 .build();
     }
 
-    @Order(1)
+    @Order(3)
+    @Bean
+    public SecurityFilterChain refreshTokenSecurityFilterChain(HttpSecurity httpSecurity) throws Exception{
+        return httpSecurity
+                .securityMatcher(new AntPathRequestMatcher("/refresh-token/**"))
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+                .addFilterBefore(new JwtRefreshTokenFilter(rsaKeyRecord,jwtTokenUtils,refreshTokenRepo), UsernamePasswordAuthenticationFilter.class)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> {
+                    log.error("[SecurityConfig:refreshTokenSecurityFilterChain] Exception due to :{}",ex);
+                    ex.authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint());
+                    ex.accessDeniedHandler(new BearerTokenAccessDeniedHandler());
+                })
+                .httpBasic(Customizer.withDefaults())
+                .build();
+    }
+
+    @Order(4)
+    @Bean
+    public SecurityFilterChain logoutSecurityFilterChain(HttpSecurity httpSecurity) throws Exception {
+        return httpSecurity
+                .securityMatcher(new AntPathRequestMatcher("/logout/**"))
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(new JwtAccessTokenFilter(rsaKeyRecord,jwtTokenUtils), UsernamePasswordAuthenticationFilter.class)
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .addLogoutHandler(logoutHandlerService)
+                        .logoutSuccessHandler(((request, response, authentication) -> SecurityContextHolder.clearContext()))
+                )
+                .exceptionHandling(ex -> {
+                    log.error("[SecurityConfig:logoutSecurityFilterChain] Exception due to :{}",ex);
+                    ex.authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint());
+                    ex.accessDeniedHandler(new BearerTokenAccessDeniedHandler());
+                })
+                .build();
+    }
+
+    @Order(5)
     @Bean
     public SecurityFilterChain h2ConsoleSecurityFilterChainConfig(HttpSecurity httpSecurity) throws Exception{
         return httpSecurity
