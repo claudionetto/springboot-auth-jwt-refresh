@@ -6,6 +6,7 @@ import com.claudionetto.jwtouath2.config.jwtConfig.JwtTokenUtils;
 import com.claudionetto.jwtouath2.config.userConfig.RSAKeyRecord;
 import com.claudionetto.jwtouath2.config.userConfig.UserInfoManagerConfig;
 import com.claudionetto.jwtouath2.repositories.RefreshTokenRepository;
+import com.claudionetto.jwtouath2.services.LogoutHandlerService;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
@@ -59,10 +60,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
                 .userDetailsService(userInfoManagerConfig)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(ex -> {
-                    ex.authenticationEntryPoint((request, response, authException) ->
-                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, authException.getMessage()));
-                })
+                .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) ->
+                        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, authException.getMessage())))
                 .httpBasic(Customizer.withDefaults())
                 .build();
     }
