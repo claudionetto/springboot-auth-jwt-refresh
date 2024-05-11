@@ -61,7 +61,9 @@ A documentação do Swagger fornece detalhes sobre os endpoints da API, incluind
 ## Diagrama de Fluxo
 
 [Usuário] --solicitação de registro--> [API] --cria usuário e retorna token--> [Usuário]
+
 [Usuário] --solicitação de login--> [API] --verifica credenciais e retorna tokens--> [Usuário]
+
 [Usuário] --token expira--> [API] --solicita refresh token--> [API] --valida refresh token e retorna novo token de acesso--> [Usuário] 
 
 ## Segurança
