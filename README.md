@@ -13,8 +13,8 @@ Este projeto demonstra uma implementação segura de autenticação utilizando J
 - **Acesso a Recursos Protegidos**: Os endpoints que exigem autenticação só podem ser acessados com um JWT válido.
 
 ## Tecnologias Utilizadas
-- **Linguagem**: Java
-- **Framework**: Spring Boot
+- **Linguagem**: Java 17
+- **Framework**: Spring Boot 3.2.5
 - **Segurança**: Spring Security
 - **Autenticação**: JWT (JSON Web Token)
 - **Banco de Dados**: H2 (em memória)
@@ -22,6 +22,8 @@ Este projeto demonstra uma implementação segura de autenticação utilizando J
 - **Documentação**: Swagger UI
 
 ## Instalação
+
+Certifique-se de ter o JAVA 17 e o Maven instalados
 
 1. **Clone o repositório:**
 ```bash
